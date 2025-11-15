@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat AI</title>
+  <style>
+    #chatLog {
+      border: 1px solid #ccc;
+      height: 300px;
+      overflow-y: scroll;
+      padding: 10px;
+    }
+    .user {
+      text-align: right;
+      color: blue;
+    }
+    .ai {
+      text-align: left;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <div id="chatLog"></div>
+  <input type="text" id="promptInput" placeholder="Ketik pesan Anda...">
+  <button onclick="kirim()">Kirim</button>
+
+  <script>
+    const PROXY_URL = "https://script.google.com/macros/s/AKfycbyi-Cam9tVxs41Qc7Y6LagZtSLMRBOHxkSLqd-iPHpf21XwCyO5axZADUVl4CVCjO0/exec";
+    const SECRET = "4321ua";
+
+    const promptInput = document.getElementById("promptInput");
+    const chatLog = document.getElementById("chatLog");
+
+    async function kirim() {
+      const prompt = promptInput.value.trim();
+      if (!prompt) return;
+
+      // tampilkan pesan user
+      const userDiv = document.createElement("div");
+      userDiv.className = "user";
+      userDiv.textContent = "Kamu: " + prompt;
+      chatLog.appendChild(userDiv);
+
+      const aiDiv = document.createElement("div");
+      aiDiv.className = "ai";
+      aiDiv.textContent = "AI: ";
+      chatLog.appendChild(aiDiv);
+
+      chatLog.scrollTop = chatLog.scrollHeight;
+
+      try {
+        const res = await fetch(PROXY_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: prompt,
+            secret: SECRET
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+          aiDiv.textContent += "Error: " + data.error;
+          return;
+        }
+
+        let text = data.result?.choices?.[0]?.message?.content || "Tidak ada respons.";
+        
+        // efek ketik huruf
+        for (let c of text) {
+          aiDiv.textContent += c;
+          await new Promise(r => setTimeout(r, 15));
+          chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+      } catch (err) {
+        aiDiv.textContent += "Error: " + err.message;
+      }
+
+      promptInput.value = "";
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+  </script>
+</body>
+</html>
